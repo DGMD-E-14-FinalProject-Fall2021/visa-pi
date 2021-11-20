@@ -5,7 +5,7 @@ from bleak import discover
 from bleak import BleakClient
 
 address = (
-    "c0:6e:26:33:49:58"
+     "AA:AA:AA:DD:EE:FF"
 )
 
 #Characteristic uuid
@@ -19,7 +19,7 @@ receive_data = []
 async def scan():
     dev = await discover()
     for i in range(0,len(dev)):
-        if dev[i].name == "STLB100":
+        if dev[i].name == "STLB250":
             #Print the devices discovered
             #TODO write to the log file
             #print("[" + str(i) + "]" + dev[i].address,dev[i].name,dev[i].metadata["uuids"])

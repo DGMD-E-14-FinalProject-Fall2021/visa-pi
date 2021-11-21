@@ -31,7 +31,14 @@ async def scan():
 
 #An easy notify function, just print the recieve data
 def notification_handler(sender, data):
-    print(', '.join('{:02x}'.format(x) for x in data))
+    d = ""
+    d = ''.join('{:02x}'.format(x) for x in data)
+    hex_distance = d[12:16]
+    # distance in micrometers
+    mic_distance = int(hex_distance, base=16)
+    #distance in cantimeters
+    cm_distance = mic_distance / 10000
+    print(cm_distance)
 
 async def run(address, debug=False):
     log = logging.getLogger(__name__)
@@ -76,6 +83,7 @@ async def run(address, debug=False):
                         )
 
             await client.start_notify(CHARACTERISTIC_UUID, notification_handler)
+            await client.write_gatt_char(CHARACTERISTIC_UUID, 15, response=True)
             await asyncio.sleep(5.0)
             await client.stop_notify(CHARACTERISTIC_UUID)
         except Exception as e:

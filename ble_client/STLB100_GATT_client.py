@@ -33,12 +33,14 @@ async def scan():
 def notification_handler(sender, data):
     d = ""
     d = ''.join('{:02x}'.format(x) for x in data)
-    hex_distance = d[12:16]
-    # distance in micrometers
-    mic_distance = int(hex_distance, base=16)
-    #distance in cantimeters
-    cm_distance = mic_distance / 10000
-    print(cm_distance)
+    hex_lower_byte = str(d[12:14])
+    hex_upper_byte = str(d[14:16])
+    hex_distance = hex_upper_byte + hex_lower_byte
+    # distance in millimeters
+    mill_distance = int(hex_distance, base=16)
+    #distance in inches
+    distance = round(mill_distance * 0.0393701, 2)
+    print(distance)
 
 async def run(address, debug=False):
     log = logging.getLogger(__name__)

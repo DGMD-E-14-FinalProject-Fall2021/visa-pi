@@ -24,9 +24,8 @@ Current Functionality:
 
 1. Connenct to the GATT server
 2. Read servicess UUIDs, characteristics and descriptors.
-3. Read environmental values
+3. Read distance in milliseconds, convert into inches using environmental UUID
+4. Dispatch distance data to consumer
 
 TODO:
-1. Dispatch characterisitcs' values to a consumer
-2. Test client against VISA SensorTile firmware. Add functionality to read distance sensor values in cantimeters.
-3. Test client against VISA SensorTile firmware. Add functionality to write haptic feedback values to GATT server.
+1. Test client against VISA SensorTile firmware. Add functionality to write haptic feedback values to GATT server and dispatch it to consumer.

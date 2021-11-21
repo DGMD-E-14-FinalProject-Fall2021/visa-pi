@@ -1,3 +1,5 @@
+import time
+import platform
 import asyncio
 import logging
 
@@ -15,34 +17,27 @@ devices_dict = {}
 devices_list = []
 receive_data = []
 
-#To discover BLE devices nearby 
-async def scan():
-    dev = await discover()
-    for i in range(0,len(dev)):
-        if dev[i].name == "STLB250":
-            #Print the devices discovered
-            #TODO write to the log file
-            #print("[" + str(i) + "]" + dev[i].address,dev[i].name,dev[i].metadata["uuids"])
-            #Put devices information into list
-            devices_dict[dev[i].address] = []
-            devices_dict[dev[i].address].append(dev[i].name)
-            devices_dict[dev[i].address].append(dev[i].metadata["uuids"])
-            devices_list.append(dev[i].address)
+async def run_ble_client(queue: asyncio.Queue()):
+    debug=False
 
-#An easy notify function, just print the recieve data
-def notification_handler(sender, data):
-    d = ""
-    d = ''.join('{:02x}'.format(x) for x in data)
-    hex_lower_byte = str(d[12:14])
-    hex_upper_byte = str(d[14:16])
-    hex_distance = hex_upper_byte + hex_lower_byte
-    # distance in millimeters
-    mill_distance = int(hex_distance, base=16)
-    #distance in inches
-    distance = round(mill_distance * 0.0393701, 2)
-    print(distance)
+    disconnected_event = asyncio.Event()
+    
+    def disconnected_callback(client):
+        print("Disconnected callback called!")
+        disconnected_event.set()
 
-async def run(address, debug=False):
+    async def scan():
+        dev = await discover()
+        for i in range(0,len(dev)):
+            if dev[i].name == "STLB250":
+                #Print the devices discovered
+                #TODO write to the log file
+                #print("[" + str(i) + "]" + dev[i].address,dev[i].name,dev[i].metadata["uuids"])
+                devices_dict[dev[i].address] = []
+                devices_dict[dev[i].address].append(dev[i].name)
+                devices_dict[dev[i].address].append(dev[i].metadata["uuids"])
+                devices_list.append(dev[i].address)
+    
     log = logging.getLogger(__name__)
     if debug:
         import sys
@@ -51,6 +46,18 @@ async def run(address, debug=False):
         h = logging.StreamHandler(sys.stdout)
         h.setLevel(logging.DEBUG)
         log.addHandler(h)
+
+    async def notification_handler(sender, data):
+        d = ""
+        d = ''.join('{:02x}'.format(x) for x in data)
+        hex_lower_byte = str(d[12:14])
+        hex_upper_byte = str(d[14:16])
+        hex_distance = hex_upper_byte + hex_lower_byte
+        # distance in millimeters
+        mill_distance = int(hex_distance, base=16)
+        #distance in inches
+        distance = round(mill_distance * 0.0393701, 2)
+        await queue.put((time.time(), distance))
 
     async with BleakClient(address, disconnected_callback = disconnected_callback) as client:
         try:
@@ -88,25 +95,8 @@ async def run(address, debug=False):
             await client.write_gatt_char(CHARACTERISTIC_UUID, 15, response=True)
             await asyncio.sleep(5.0)
             await client.stop_notify(CHARACTERISTIC_UUID)
+            # send exit command to the consumer
+            await queue.put((time.time(), None))
         except Exception as e:
              await disconnected_event.wait()
     
-
-if __name__ == "__main__":
-    print("Scanning for peripherals...")
-
-    disconnected_event = asyncio.Event()
-    
-    def disconnected_callback(client):
-        print("Disconnected callback called!")
-        disconnected_event.set()
-
-    #Build an event loop
-    loop = asyncio.get_event_loop()
-    #Run the discover event
-    loop.run_until_complete(scan())
-
-    #Run notify event
-    loop = asyncio.get_event_loop()
-    loop.set_debug(True)
-    loop.run_until_complete(run(address, True))    

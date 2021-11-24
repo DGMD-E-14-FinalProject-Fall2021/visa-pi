@@ -1,6 +1,3 @@
-# USAGE
-# python openvino_real_time_object_detection.py --prototxt MobileNetSSD_deploy.prototxt --model MobileNetSSD_deploy.caffemodel
-
 # import the necessary packages
 from imutils.video import VideoStream
 from imutils.video import FPS
@@ -29,6 +26,8 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 	"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 	"sofa", "train", "tvmonitor"]
 COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
+#the box position for the bottle to know the position when there is overlap between two items
+CACHED_BOTTLE_BOX = [0,0,0,0]
 
 # load our serialized model from disk
 print("[INFO] loading model...")
@@ -50,22 +49,22 @@ while True:
 	# to have a maximum width of 400 pixels
 	frame = vs.read()
 	frame = imutils.resize(frame, width=400)
-
+	
 	# grab the frame dimensions and convert it to a blob
 	(h, w) = frame.shape[:2]
 	blob = cv2.dnn.blobFromImage(frame, 0.007843, (300, 300), 127.5)
-
+	
 	# pass the blob through the network and obtain the detections and
 	# predictions
 	net.setInput(blob)
 	detections = net.forward()
-
+	
 	# loop over the detections
 	for i in np.arange(0, detections.shape[2]):
 		# extract the confidence (i.e., probability) associated with
 		# the prediction
 		confidence = detections[0, 0, i, 2]
-
+		
 		# filter out weak detections by ensuring the `confidence` is
 		# greater than the minimum confidence
 		if confidence > args["confidence"]:
@@ -75,7 +74,7 @@ while True:
 			idx = int(detections[0, 0, i, 1])
 			box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
 			(startX, startY, endX, endY) = box.astype("int")
-
+			
 			# draw the prediction on the frame
 			label = "{}: {:.2f}%".format(CLASSES[idx],
 				confidence * 100)
@@ -84,18 +83,49 @@ while True:
 			y = startY - 15 if startY - 15 > 15 else startY + 15
 			cv2.putText(frame, label, (startX, y),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+			
+			#Draw circle in center
+			xcenter = startX + (int(round((endX - startX) / 2 )))
+			ycenter = startY + (int(round((endY - startY) / 2 )))
+			cv2.circle(frame, (xcenter, ycenter), 5, (0,0,225), thickness=-1)
+			
+			#Print object info
+			#print('Object' + str(i) + ': ' + CLASSES[idx] + 'at (' + str(xcenter) + ' ,' + str(ycenter) + ')')
+			
+			if CLASSES[idx] == 'bottle':
+				#Cache the position of the bottle to have the last know position incase of overlap  
+				CACHED_BOTTLE_BOX.insert(0, startX)
+				CACHED_BOTTLE_BOX.insert(1, startY)
+				CACHED_BOTTLE_BOX.insert(2, endX)
+				CACHED_BOTTLE_BOX.insert(3, endY)
+				
+				centerX = (startX + endX) / 2  
+				centerY = (startY + endY) / 2
+				secondStartX = startX + 30
+				secondStartY = startY + 30
+				secondEndX = endX - 30
+				secondEndY = endY - 30
+				cv2.rectangle(frame, (secondStartX, secondStartY), (secondEndX, secondEndY), COLORS[idx], 2)
+				#print('the x coordinate is: ' + str(centerX) + ' the y coordinate is: ' + str(centerY) )
+				
+			if CLASSES[idx] == 'tvmonitor':
+				#Cache the position of the bottle to have the last know position incase of overlap  
+				print(CACHED_BOTTLE_BOX)
+				
 
+
+			
 	# show the output frame
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
-
+	
 	# if the `q` key was pressed, break from the loop
 	if key == ord("q"):
 		break
-
+	
 	# update the FPS counter
 	fps.update()
-
+	
 # stop the timer and display FPS information
 fps.stop()
 print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))

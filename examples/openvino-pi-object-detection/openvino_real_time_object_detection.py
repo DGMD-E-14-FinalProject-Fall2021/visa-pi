@@ -99,8 +99,7 @@ while True:
 				CACHED_BOTTLE_BOX.insert(2, endX)
 				CACHED_BOTTLE_BOX.insert(3, endY)
 				
-				centerX = (startX + endX) / 2  
-				centerY = (startY + endY) / 2
+				#Add second box within a box (just some random logic should think of a more valid solution lik % of the object 
 				secondStartX = startX + 30
 				secondStartY = startY + 30
 				secondEndX = endX - 30
@@ -112,9 +111,7 @@ while True:
 				#Cache the position of the bottle to have the last know position incase of overlap  
 				print(CACHED_BOTTLE_BOX)
 				
-
-
-			
+				
 	# show the output frame
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF

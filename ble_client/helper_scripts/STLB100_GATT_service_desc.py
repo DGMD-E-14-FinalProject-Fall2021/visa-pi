@@ -1,10 +1,4 @@
-"""
-Service Explorer
-----------------
-An example showing how to access and print out the services, characteristics and
-descriptors of a connected GATT server.
-Created on 2019-03-25 by hbldh <henrik.blidh@nedomkull.com>
-"""
+#!/usr/bin/env python3
 
 import sys
 import platform
@@ -20,7 +14,7 @@ devices_list = []
 receive_data = []
 
 ADDRESS = (
-    "C0:6E:26:33:49:58"
+    "AA:AA:AA:DD:EE:FF"
     if platform.system() != "Darwin"
     else "B9EA5233-37EF-4DD6-87A8-2A875E821C46"
 )
@@ -35,7 +29,7 @@ def env_notify_callback(sender: int, data: bytearray):
 async def discover():
     devices = await discover()
     for i in range(0,len(devices)):
-        if i.name == "STLB100":
+        if i.name == "STLB250":
             #Print the devices discovered
             print("[" + str(i) + "]" + dev[i].address,dev[i].name,dev[i].metadata["uuids"])
             #Put devices information into list

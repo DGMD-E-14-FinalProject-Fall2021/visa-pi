@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 import platform
 import asyncio
@@ -7,16 +9,30 @@ from bleak import discover
 from bleak import BleakClient
 
 address = (
-     "AA:AA:AA:DD:EE:FF"
+     "C0:CC:BB:AA:AA:AA"
 )
 
 #Characteristic uuid
-CHARACTERISTIC_UUID = "00140000-0001-11e1-ac36-0002a5d5c51b"
+old_env_char = "00140000-0001-11e1-ac36-0002a5d5c51b"
+DISTANCE_CHAR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
+HAPTIC_CHAR_UUID = "30000000-0001-11e1-ac36-0002a5d5c51b"
 
 devices_dict = {}
 devices_list = []
 receive_data = []
 
+async def scan():
+    dev = await discover()
+    for i in range(0,len(dev)):
+        if dev[i].name == "STLB250":
+           #Print the devices discovered
+           #TODO write to the log file
+            print("[" + str(i) + "]" + dev[i].address,dev[i].name,dev[i].metadata["uuids"])
+            devices_dict[dev[i].address] = []
+            devices_dict[dev[i].address].append(dev[i].name)
+            devices_dict[dev[i].address].append(dev[i].metadata["uuids"])
+            devices_list.append(dev[i].address)
+ 
 async def run_ble_client(queue: asyncio.Queue()):
     debug=False
 
@@ -25,18 +41,6 @@ async def run_ble_client(queue: asyncio.Queue()):
     def disconnected_callback(client):
         print("Disconnected callback called!")
         disconnected_event.set()
-
-    async def scan():
-        dev = await discover()
-        for i in range(0,len(dev)):
-            if dev[i].name == "STLB250":
-                #Print the devices discovered
-                #TODO write to the log file
-                #print("[" + str(i) + "]" + dev[i].address,dev[i].name,dev[i].metadata["uuids"])
-                devices_dict[dev[i].address] = []
-                devices_dict[dev[i].address].append(dev[i].name)
-                devices_dict[dev[i].address].append(dev[i].metadata["uuids"])
-                devices_list.append(dev[i].address)
     
     log = logging.getLogger(__name__)
     if debug:
@@ -61,6 +65,9 @@ async def run_ble_client(queue: asyncio.Queue()):
 
     async with BleakClient(address, disconnected_callback = disconnected_callback) as client:
         try:
+
+            await scan()
+
             x = await client.is_connected()
             log.info("Connected: {0}".format(x))
 
@@ -91,8 +98,11 @@ async def run_ble_client(queue: asyncio.Queue()):
                             )
                         )
 
-            await client.start_notify(CHARACTERISTIC_UUID, notification_handler)
-            await client.write_gatt_char(CHARACTERISTIC_UUID, 15, response=True)
+
+            await client.start_notify(DISTANCE_CHAR_UUID, notification_handler) 
+            #array = bytearray(array('b', [12, 4]))
+            #await client.write_gatt_char(HAPTIC_CHAR_UUID, 4, response=False)
+            await client.write_gatt_char(DISTANCE_CHAR_UUID, 4, response=True)
             await asyncio.sleep(5.0)
             await client.stop_notify(CHARACTERISTIC_UUID)
             # send exit command to the consumer

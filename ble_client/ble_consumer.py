@@ -4,8 +4,14 @@ import time
 import datetime
 import platform
 import asyncio
+import os
 
 async def run():
+
+    os.system('bluetoothctl -- remove C0:CC:BB:AA:AA:AA')
+    device_ble_mac = os.getenv('DEVICE_BLE_MAC')
+    os.system('sudo rm "/var/lib/bluetooth/{}/cache/C0:CC:BB:AA:AA:AA"'.format(device_ble_mac))
+
     queue = asyncio.Queue()
 
     client_task = run_ble_client(queue)

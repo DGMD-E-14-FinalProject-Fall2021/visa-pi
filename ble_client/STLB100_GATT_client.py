@@ -13,8 +13,7 @@ address = (
 )
 
 #Characteristic uuid
-old_env_char = "00140000-0001-11e1-ac36-0002a5d5c51b"
-DISTANCE_CHAR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
+DISTANCE_CHAR_UUID = "00140000-0001-11e1-ac36-0002a5d5c51b"
 HAPTIC_CHAR_UUID = "30000000-0001-11e1-ac36-0002a5d5c51b"
 
 devices_dict = {}
@@ -104,7 +103,7 @@ async def run_ble_client(queue: asyncio.Queue()):
             #await client.write_gatt_char(HAPTIC_CHAR_UUID, 4, response=False)
             await client.write_gatt_char(DISTANCE_CHAR_UUID, 4, response=True)
             await asyncio.sleep(5.0)
-            await client.stop_notify(CHARACTERISTIC_UUID)
+            await client.stop_notify(DISTANCE_CHAR_UUID)
             # send exit command to the consumer
             await queue.put((time.time(), None))
         except Exception as e:

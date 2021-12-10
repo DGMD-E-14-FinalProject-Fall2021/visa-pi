@@ -12,9 +12,10 @@ address = (
      "C0:CC:BB:AA:AA:AA"
 )
 
-#Characteristic uuid
+# Distance characteristic uuid
 DISTANCE_CHAR_UUID = "00140000-0001-11e1-ac36-0002a5d5c51b"
-HAPTIC_CHAR_UUID = "30000000-0001-11e1-ac36-0002a5d5c51b"
+# Haptic characteristic uuid
+HAPTIC_CHAR_UUID = "20000000-0001-11e1-ac36-0002a5d5c51b"
 
 devices_dict = {}
 devices_list = []
@@ -97,10 +98,13 @@ async def run_ble_client(queue: asyncio.Queue()):
                             )
                         )
 
+            # Turn on haptic sensor with value 0x01 (Move hand right)
+            await client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x01', response=True)
+            await asyncio.sleep(5.0)
+            # Turn off haptic sensor with a value of 0x00
+            await client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x00', response=True)
 
-            await client.start_notify(DISTANCE_CHAR_UUID, notification_handler) 
-            #array = bytearray(array('b', [12, 4]))
-            #await client.write_gatt_char(HAPTIC_CHAR_UUID, 4, response=False)
+            await client.start_notify(DISTANCE_CHAR_UUID, notification_handler)
             await client.write_gatt_char(DISTANCE_CHAR_UUID, 4, response=True)
             await asyncio.sleep(5.0)
             await client.stop_notify(DISTANCE_CHAR_UUID)

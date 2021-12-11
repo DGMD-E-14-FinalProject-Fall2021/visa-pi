@@ -1,0 +1,3 @@
+[submodule "visa_modelzoo"]
+	path = visa_modelzoo
+	url = https://github.com/DGMD-E-14-FinalProject-Fall2021/visa-modelzoo.git

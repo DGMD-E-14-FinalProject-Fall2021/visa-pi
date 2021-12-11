@@ -8,6 +8,8 @@ import logging
 from bleak import discover
 from bleak import BleakClient
 
+client = 0
+
 address = (
      "C0:CC:BB:AA:AA:AA"
 )
@@ -32,6 +34,23 @@ async def scan():
             devices_dict[dev[i].address].append(dev[i].name)
             devices_dict[dev[i].address].append(dev[i].metadata["uuids"])
             devices_list.append(dev[i].address)
+ 
+async def run_haptic_feedback(queue_haptic: asyncio.Queue):
+    while True:
+        # Use await asyncio.wait_for(queue.get(), timeout=1.0) if you want a timeout for getting data.
+        data = await queue_haptic.get()
+        print(f"{data}: haptic handler received!")
+        #if data is None:
+        #    print("Logic disconnecting! Exiting consumer loop...")
+        #    break
+        #else:
+            # disconnect distance streaming
+            #await global_client.write_gatt_char(DISTANCE_CHAR_UUID, 0, response=True)
+            #await asyncio.sleep(1.0) 
+            #await global_client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x01', response=True)
+            #await asyncio.sleep(1.0)
+            # re-start distance streaming
+            #await global_client.write_gatt_char(DISTANCE_CHAR_UUID, 4, response=True)
  
 async def run_ble_client(queue: asyncio.Queue()):
     debug=False
@@ -70,7 +89,7 @@ async def run_ble_client(queue: asyncio.Queue()):
 
             x = await client.is_connected()
             log.info("Connected: {0}".format(x))
-
+            
             for service in client.services:
                 log.info("[Service] {0}: {1}".format(service.uuid, service.description))
                 for char in service.characteristics:
@@ -99,15 +118,15 @@ async def run_ble_client(queue: asyncio.Queue()):
                         )
 
             # Turn on haptic sensor with value 0x01 (Move hand right)
-            await client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x01', response=True)
-            await asyncio.sleep(5.0)
+            #await client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x01', response=True)
+            #await asyncio.sleep(5.0)
             # Turn off haptic sensor with a value of 0x00
-            await client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x00', response=True)
+            #await client.write_gatt_char(HAPTIC_CHAR_UUID, b'\x00', response=True)
 
             await client.start_notify(DISTANCE_CHAR_UUID, notification_handler)
             await client.write_gatt_char(DISTANCE_CHAR_UUID, 4, response=True)
             await asyncio.sleep(5.0)
-            await client.stop_notify(DISTANCE_CHAR_UUID)
+            await client.stop_notify(DISTANCE_CHAR_UUID) 
             # send exit command to the consumer
             await queue.put((time.time(), None))
         except Exception as e:
